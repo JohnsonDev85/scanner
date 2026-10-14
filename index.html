@@ -2,23 +2,54 @@
 <html lang="sw">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0a08">
   <title>JOHCARDS - Scanner</title>
   <link rel="stylesheet" href="scanner.css">
 </head>
 <body>
 
   <div class="container">
-    <h2>Scan Kadi ya Mgeni</h2>
+
+    <header class="kichwa">
+      <div class="hex-mapambo" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="jina-dogo">JOHCARDS &middot; GETINI</div>
+      <h2>Scan Kadi ya Mgeni</h2>
+    </header>
 
     <button id="anza">Anza Kuscan</button>
     <div id="reader"></div>
+
+    <!-- Tochi na zoom (zinajazwa na scanner.js kama simu inaruhusu) -->
+    <div id="vifaaVyaKamera"></div>
+
+    <!-- Kidokezo kama QR haisomeki -->
+    <div id="kidokezo"></div>
 
     <div id="jibu">
       <p id="jinaMgeni"></p>
       <p id="hali"></p>
       <button id="mwingine">Scan Mwingine</button>
     </div>
+
+    <!-- Kagua kwa namba (kwa wageni wasio na QR) -->
+    <section id="njiaNamba">
+      <div class="njia-kichwa">Hana QR? Andika namba yake</div>
+      <input
+        id="nambaYaMgeni"
+        type="text"
+        maxlength="4"
+        placeholder="Namba (mfano K7M3)"
+        autocapitalize="characters"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false">
+      <button id="kagua" type="button">Kagua Namba</button>
+      <div id="lebo">Inatafuta tukio...</div>
+    </section>
+
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
