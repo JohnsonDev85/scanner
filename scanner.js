@@ -16,12 +16,15 @@ let kidokezoTimer = null;
 let matukioYaKukagua = [];
 let anakaguaNamba = false;
 
+// darasa: imelipwa | haijalipwa | ameshaingia | haijulikani
 function onyeshaJibu(darasa, jina, maneno) {
-  kisanduku.style.background = ""; // futa rangi maalum ya mwisho
   kisanduku.className = darasa;
   kisanduku.style.display = "block";
   jinaMgeni.textContent = jina;
   hali.textContent = maneno;
+  try {
+    kisanduku.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (e) {}
 }
 
 window.onerror = function (ujumbe) {
@@ -108,8 +111,7 @@ async function kaguaMgeni(ref) {
       onyeshaJibu("haijalipwa", matokeo.jina, "HAJALIPA ✘");
       piga(false);
     } else if (matokeo.aina === "ameshaingia") {
-      onyeshaJibu("haijulikani", matokeo.jina, "ALISHAINGIA TAYARI");
-      kisanduku.style.background = "#e8710a"; // machungwa
+      onyeshaJibu("ameshaingia", matokeo.jina, "ALISHAINGIA TAYARI");
       piga(false);
     } else {
       onyeshaJibu("imelipwa", matokeo.jina, "AMELIPA ✔ KARIBU · " + matokeo.ainaKadi);
@@ -239,25 +241,15 @@ async function angaliaKwaNamba() {
   }
 }
 
-// Jenga sehemu ya "kagua kwa namba" chini ya kitufe cha kuanza
-function jengaNjiaYaNamba() {
-  const sanduku = document.createElement("div");
-  sanduku.id = "njiaNamba";
-  sanduku.style.cssText =
-    "margin:16px 0;padding:14px;border:1px solid #ccc;border-radius:10px;text-align:center;";
-  sanduku.innerHTML =
-    '<div style="font-weight:600;margin-bottom:8px;">Hana QR? Andika namba yake</div>' +
-    '<input id="nambaYaMgeni" type="text" maxlength="' + UREFU_WA_NAMBA + '" placeholder="Namba (mfano K7M3)" ' +
-    'autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" ' +
-    'style="width:100%;padding:12px;font-size:26px;text-align:center;letter-spacing:6px;text-transform:uppercase;box-sizing:border-box;margin-bottom:8px;">' +
-    '<button id="kagua" type="button" style="width:100%;padding:12px;font-size:16px;">Kagua Namba</button>' +
-    '<div id="lebo" style="margin-top:8px;font-size:12px;opacity:0.7;">Inatafuta tukio...</div>';
-
-  kitufeAnza.insertAdjacentElement("afterend", sanduku);
-
+// Unganisha sehemu ya "kagua kwa namba" (HTML yake iko kwenye index.html)
+function andaaNjiaYaNamba() {
   const kisandukuNamba = document.getElementById("nambaYaMgeni");
+  const kitufeKagua = document.getElementById("kagua");
+  if (!kisandukuNamba || !kitufeKagua) return;
 
-  document.getElementById("kagua").addEventListener("click", angaliaKwaNamba);
+  kisandukuNamba.maxLength = UREFU_WA_NAMBA;
+
+  kitufeKagua.addEventListener("click", angaliaKwaNamba);
 
   kisandukuNamba.addEventListener("keydown", function (e) {
     if (e.key === "Enter") angaliaKwaNamba();
@@ -281,43 +273,33 @@ function futaKidokezo() {
     kidokezoTimer = null;
   }
   const k = document.getElementById("kidokezo");
-  if (k) k.style.display = "none";
+  if (k) k.classList.remove("onekana");
 }
 
 function anzaKidokezo() {
   futaKidokezo();
   kidokezoTimer = setTimeout(function () {
-    let k = document.getElementById("kidokezo");
-    if (!k) {
-      k = document.createElement("div");
-      k.id = "kidokezo";
-      k.style.cssText =
-        "margin:8px 0;padding:10px;border-radius:8px;background:#fff3cd;color:#664d03;font-size:14px;text-align:center;";
-      kitufeAnza.insertAdjacentElement("afterend", k);
-    }
+    const k = document.getElementById("kidokezo");
+    if (!k) return;
     k.textContent =
       "QR haisomeki? Sogeza simu mbali au karibu, ongeza mwanga, au washa tochi.";
-    k.style.display = "block";
+    k.classList.add("onekana");
   }, 10000);
 }
 
 // ============ TOCHI NA ZOOM (kama simu inaruhusu) ============
 function onyeshaVifaaVyaKamera() {
-  const zamani = document.getElementById("vifaaVyaKamera");
-  if (zamani) zamani.remove();
+  const eneo = document.getElementById("vifaaVyaKamera");
+  if (!eneo) return;
+  eneo.innerHTML = "";
 
   let uwezo = null;
   try {
     uwezo = scanner.getRunningTrackCameraCapabilities();
   } catch (e) {
-    return; // toleo la zamani la maktaba, au simu haiungi mkono
+    return; // simu haiungi mkono
   }
   if (!uwezo) return;
-
-  const sanduku = document.createElement("div");
-  sanduku.id = "vifaaVyaKamera";
-  sanduku.style.cssText = "margin:8px 0;text-align:center;";
-  let kuna = false;
 
   // Tochi
   try {
@@ -327,7 +309,6 @@ function onyeshaVifaaVyaKamera() {
       const kitufe = document.createElement("button");
       kitufe.type = "button";
       kitufe.textContent = "🔦 Washa Tochi";
-      kitufe.style.cssText = "padding:10px 14px;margin:4px;font-size:15px;";
       kitufe.addEventListener("click", async function () {
         try {
           await tochi.apply(!imewaka);
@@ -337,8 +318,7 @@ function onyeshaVifaaVyaKamera() {
           console.warn("Tochi imeshindikana:", e);
         }
       });
-      sanduku.appendChild(kitufe);
-      kuna = true;
+      eneo.appendChild(kitufe);
     }
   } catch (e) {}
 
@@ -348,24 +328,19 @@ function onyeshaVifaaVyaKamera() {
     if (zum && zum.isSupported()) {
       const lebo = document.createElement("label");
       lebo.textContent = "Zoom ";
-      lebo.style.cssText = "margin:4px;font-size:15px;";
       const slider = document.createElement("input");
       slider.type = "range";
       slider.min = zum.min();
       slider.max = zum.max();
       slider.step = zum.step();
       slider.value = zum.value();
-      slider.style.cssText = "vertical-align:middle;width:55%;";
       slider.addEventListener("input", function () {
         zum.apply(parseFloat(slider.value)).catch(function () {});
       });
       lebo.appendChild(slider);
-      sanduku.appendChild(lebo);
-      kuna = true;
+      eneo.appendChild(lebo);
     }
   } catch (e) {}
-
-  if (kuna) kitufeAnza.insertAdjacentElement("afterend", sanduku);
 }
 
 // ============ KUSCAN QR ============
@@ -477,4 +452,4 @@ document.getElementById("mwingine").addEventListener("click", function () {
 });
 
 // ============ INIT ============
-jengaNjiaYaNamba();
+andaaNjiaYaNamba();
