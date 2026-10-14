@@ -7,10 +7,10 @@ const hali = document.getElementById("hali");
 const UREFU_WA_NAMBA = 4;
 
 let anaangalia = false;
-let nenoLaMwisho = "";
-let mudaWaMwisho = 0;
+let kameraImewaka = false;
 let scanner = null;
 let db = null;
+let kidokezoTimer = null;
 
 // Matukio yanayotumika kukagua kwa namba (yanatafutwa yenyewe)
 let matukioYaKukagua = [];
@@ -274,24 +274,147 @@ function jengaNjiaYaNamba() {
   if (db) tafutaMatukio();
 }
 
+// ============ KIDOKEZO KAMA QR HAISOMEKI ============
+function futaKidokezo() {
+  if (kidokezoTimer) {
+    clearTimeout(kidokezoTimer);
+    kidokezoTimer = null;
+  }
+  const k = document.getElementById("kidokezo");
+  if (k) k.style.display = "none";
+}
+
+function anzaKidokezo() {
+  futaKidokezo();
+  kidokezoTimer = setTimeout(function () {
+    let k = document.getElementById("kidokezo");
+    if (!k) {
+      k = document.createElement("div");
+      k.id = "kidokezo";
+      k.style.cssText =
+        "margin:8px 0;padding:10px;border-radius:8px;background:#fff3cd;color:#664d03;font-size:14px;text-align:center;";
+      kitufeAnza.insertAdjacentElement("afterend", k);
+    }
+    k.textContent =
+      "QR haisomeki? Sogeza simu mbali au karibu, ongeza mwanga, au washa tochi.";
+    k.style.display = "block";
+  }, 10000);
+}
+
+// ============ TOCHI NA ZOOM (kama simu inaruhusu) ============
+function onyeshaVifaaVyaKamera() {
+  const zamani = document.getElementById("vifaaVyaKamera");
+  if (zamani) zamani.remove();
+
+  let uwezo = null;
+  try {
+    uwezo = scanner.getRunningTrackCameraCapabilities();
+  } catch (e) {
+    return; // toleo la zamani la maktaba, au simu haiungi mkono
+  }
+  if (!uwezo) return;
+
+  const sanduku = document.createElement("div");
+  sanduku.id = "vifaaVyaKamera";
+  sanduku.style.cssText = "margin:8px 0;text-align:center;";
+  let kuna = false;
+
+  // Tochi
+  try {
+    const tochi = uwezo.torchFeature();
+    if (tochi && tochi.isSupported()) {
+      let imewaka = false;
+      const kitufe = document.createElement("button");
+      kitufe.type = "button";
+      kitufe.textContent = "🔦 Washa Tochi";
+      kitufe.style.cssText = "padding:10px 14px;margin:4px;font-size:15px;";
+      kitufe.addEventListener("click", async function () {
+        try {
+          await tochi.apply(!imewaka);
+          imewaka = !imewaka;
+          kitufe.textContent = imewaka ? "🔦 Zima Tochi" : "🔦 Washa Tochi";
+        } catch (e) {
+          console.warn("Tochi imeshindikana:", e);
+        }
+      });
+      sanduku.appendChild(kitufe);
+      kuna = true;
+    }
+  } catch (e) {}
+
+  // Zoom
+  try {
+    const zum = uwezo.zoomFeature();
+    if (zum && zum.isSupported()) {
+      const lebo = document.createElement("label");
+      lebo.textContent = "Zoom ";
+      lebo.style.cssText = "margin:4px;font-size:15px;";
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = zum.min();
+      slider.max = zum.max();
+      slider.step = zum.step();
+      slider.value = zum.value();
+      slider.style.cssText = "vertical-align:middle;width:55%;";
+      slider.addEventListener("input", function () {
+        zum.apply(parseFloat(slider.value)).catch(function () {});
+      });
+      lebo.appendChild(slider);
+      sanduku.appendChild(lebo);
+      kuna = true;
+    }
+  } catch (e) {}
+
+  if (kuna) kitufeAnza.insertAdjacentElement("afterend", sanduku);
+}
+
 // ============ KUSCAN QR ============
+// Scanner inasimama baada ya kila mgeni; bonyeza "mwingine" kuendelea
 function scanImefanikiwa(maandishi) {
-  const sasa = Date.now();
-
   if (anaangalia) return;
-  // Kadi ileile ndani ya sekunde 4: puuza
-  if (maandishi === nenoLaMwisho && sasa - mudaWaMwisho < 4000) return;
-
   anaangalia = true;
-  nenoLaMwisho = maandishi;
-  mudaWaMwisho = sasa;
+  futaKidokezo();
+  angaliaMgeni(maandishi);
+}
 
-  angaliaMgeni(maandishi).finally(function () {
-    // Subiri kidogo kisha ruhusu scan inayofuata (hakuna haja ya kubonyeza "mwingine")
-    setTimeout(function () {
-      anaangalia = false;
-    }, 1200);
-  });
+// Mipangilio ya kamera inayofaa simu zote, hata za kawaida
+const mipangilioYaKamera = {
+  fps: 10, // simu dhaifu hazishindwi kuchakata fremu nyingi
+  disableFlip: true,
+  qrbox: function (upana, urefu) {
+    // Soma karibu fremu nzima, QR hahitaji kuwa katikati kabisa
+    const ndogo = Math.min(upana, urefu);
+    const ukubwa = Math.max(50, Math.floor(ndogo * 0.9));
+    return { width: ukubwa, height: ukubwa };
+  }
+};
+
+// Jaribu njia kadhaa za kufungua kamera ili ifanye kazi kwenye simu yoyote
+async function fungulaKamera() {
+  // 1. Kamera ya nyuma (njia ya kawaida)
+  try {
+    await scanner.start({ facingMode: "environment" }, mipangilioYaKamera, scanImefanikiwa);
+    return;
+  } catch (e1) {
+    console.warn("Kamera ya nyuma imeshindikana, najaribu nyingine:", e1);
+  }
+
+  // 2. Tafuta kamera zote za simu, chagua ya nyuma (au ya mwisho kwenye orodha)
+  try {
+    const kamera = await Html5Qrcode.getCameras();
+    if (kamera && kamera.length) {
+      const nyuma =
+        kamera.find(function (k) { return /back|rear|environment|nyuma/i.test(k.label); }) ||
+        kamera[kamera.length - 1];
+      await scanner.start(nyuma.id, mipangilioYaKamera, scanImefanikiwa);
+      return;
+    }
+  } catch (e2) {
+    console.warn("Orodha ya kamera imeshindikana, najaribu ya mbele:", e2);
+  }
+
+  // 3. Kamera ya mbele kama ya mwisho
+  await scanner.start({ facingMode: "user" }, mipangilioYaKamera, scanImefanikiwa);
 }
 
 kitufeAnza.addEventListener("click", function () {
@@ -300,11 +423,11 @@ kitufeAnza.addEventListener("click", function () {
     return;
   }
 
+  // Kamera tayari imewaka: usifungue mara mbili
+  if (kameraImewaka) return;
+
   if (!scanner) {
-    const mipangilio = {
-      verbose: false,
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-    };
+    const mipangilio = { verbose: false };
     if (typeof Html5QrcodeSupportedFormats !== "undefined") {
       mipangilio.formatsToSupport = [Html5QrcodeSupportedFormats.QR_CODE];
     }
@@ -316,32 +439,41 @@ kitufeAnza.addEventListener("click", function () {
 
   onyeshaJibu("haijulikani", "Subiri...", "Inafungua kamera");
 
-  scanner
-    .start(
-      { facingMode: "environment" },
-      {
-        fps: 25,
-        disableFlip: true,
-        qrbox: function (upana, urefu) {
-          const ndogo = Math.min(upana, urefu);
-          const ukubwa = Math.floor(ndogo * 0.7);
-          return { width: ukubwa, height: ukubwa };
-        }
-      },
-      scanImefanikiwa
-    )
+  fungulaKamera()
     .then(function () {
+      kameraImewaka = true;
       kisanduku.style.display = "none";
+
+      // Omba focus ya kuendelea (kamera zisizo na focus nzuri)
+      try {
+        if (typeof scanner.applyVideoConstraints === "function") {
+          scanner
+            .applyVideoConstraints({ advanced: [{ focusMode: "continuous" }] })
+            .catch(function () {});
+        }
+      } catch (e) {}
+
+      onyeshaVifaaVyaKamera();
+      anzaKidokezo();
     })
     .catch(function (error) {
-      onyeshaJibu("haijulikani", "Kamera haijafunguka", String(error));
+      const maelezo = String(error);
+      if (/NotAllowed|Permission|denied/i.test(maelezo)) {
+        onyeshaJibu(
+          "haijulikani",
+          "Kamera imezuiwa",
+          "Ruhusu kamera kwenye browser, kisha bonyeza Anza tena"
+        );
+      } else {
+        onyeshaJibu("haijulikani", "Kamera haijafunguka", maelezo);
+      }
     });
 });
 
 document.getElementById("mwingine").addEventListener("click", function () {
   kisanduku.style.display = "none";
   anaangalia = false;
-  nenoLaMwisho = "";
+  if (kameraImewaka) anzaKidokezo();
 });
 
 // ============ INIT ============
