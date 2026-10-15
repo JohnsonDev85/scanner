@@ -9,6 +9,18 @@
 </head>
 <body>
 
+  <!-- KIPANDE CHA MUDA: kinaonyesha kosa kwenye skrini (tutakiondoa baadaye) -->
+  <script>
+  window.addEventListener("error", function (e) {
+    var t = e.target || {};
+    if (t.src || t.href) {
+      alert("Faili halijapakia: " + (t.src || t.href));
+    } else {
+      alert("Kosa: " + e.message + " | mstari " + e.lineno);
+    }
+  }, true);
+  </script>
+
   <div class="container">
 
     <header class="kichwa">
