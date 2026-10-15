@@ -1,3 +1,5 @@
+alert("KIPIMO 1: scanner.js imepakia"); // KIPIMO
+
 const kitufeAnza = document.getElementById("anza");
 const kisanduku = document.getElementById("jibu");
 const jinaMgeni = document.getElementById("jinaMgeni");
@@ -395,8 +397,11 @@ async function fungulaKamera() {
 }
 
 kitufeAnza.addEventListener("click", function () {
+  alert("KIPIMO 2: kitufe kimebonyezwa"); // KIPIMO
+
   if (typeof Html5Qrcode === "undefined") {
     onyeshaJibu("haijulikani", "Kosa", "Maktaba ya scanner haijapakia");
+    alert("KIPIMO: Maktaba ya Html5Qrcode haijapakia (angalia intaneti)"); // KIPIMO
     return;
   }
 
@@ -435,6 +440,7 @@ kitufeAnza.addEventListener("click", function () {
     })
     .catch(function (error) {
       const maelezo = String(error);
+      alert("KIPIMO 3: kamera imeshindwa: " + maelezo); // KIPIMO
       if (/NotAllowed|Permission|denied/i.test(maelezo)) {
         onyeshaJibu(
           "haijulikani",
