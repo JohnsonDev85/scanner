@@ -391,3 +391,15 @@ h2 {
     transition: none !important;
   }
 }
+#reader {
+  width: 100% !important;
+  min-height: 300px !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+#reader video {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+}
