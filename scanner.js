@@ -89,12 +89,14 @@ async function kaguaMgeni(ref) {
 
       const mgeni = doc.data();
 
-      if (mgeni.paid !== true) {
-        return { aina: "haijalipwa", jina: mgeni.name };
-      }
-
+      // Kwanza: ameshaingia? (hii inafanya kazi kwa QR na kwa namba)
       if (mgeni.attended === true) {
         return { aina: "ameshaingia", jina: mgeni.name };
+      }
+
+      // Kisha: amelipa?
+      if (mgeni.paid !== true) {
+        return { aina: "haijalipwa", jina: mgeni.name };
       }
 
       t.update(ref, {
