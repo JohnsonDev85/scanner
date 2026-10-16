@@ -403,3 +403,11 @@ h2 {
   width: 100% !important;
   height: auto !important;
 }
+
+#jibu {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 8px;
+  right: 8px;
+  z-index: 1000;
+}
