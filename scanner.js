@@ -222,7 +222,9 @@ async function angaliaKwaNamba() {
     });
 
     if (zilizopatikana.length === 0) {
-      onyeshaJibu("haijulikani", "", "NAMBA HAIJULIKANI");
+      // Namba si sahihi: mlio na mtetemo tu, bila kisanduku cha matokeo
+      kisanduku.style.display = "none";
+      anaangalia = false;
       piga(false);
     } else if (zilizopatikana.length > 1) {
       onyeshaJibu("haijulikani", "", "NAMBA IPO KWENYE MATUKIO ZAIDI YA MOJA");
