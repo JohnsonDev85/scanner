@@ -16,6 +16,9 @@ let kidokezoTimer = null;
 let matukioYaKukagua = [];
 let anakaguaNamba = false;
 
+// Tukio lililochaguliwa (linabaki hadi ukurasa ufunguliwe upya)
+let tukioLililochaguliwa = "";
+
 // darasa: imelipwa | haijalipwa | ameshaingia | haijulikani
 function onyeshaJibu(darasa, jina, maneno) {
   kisanduku.className = darasa;
@@ -139,7 +142,7 @@ async function kaguaMgeni(ref) {
   }
 }
 
-// Ukaguzi kwa QR
+// Ukaguzi kwa QR (haihitaji kuchagua tukio)
 async function angaliaMgeni(maandishi) {
   const sehemu = maandishi.split("::");
 
@@ -166,6 +169,38 @@ function tareheYaLeo() {
   );
 }
 
+// Jaza orodha ya kuchagua tukio (inaonekana tu kama matukio ni zaidi ya moja)
+function andaaOrodhaYaMatukio() {
+  const orodha = document.getElementById("chaguaTukio");
+  if (!orodha) return;
+
+  if (matukioYaKukagua.length > 1) {
+    orodha.innerHTML = "";
+
+    const kwanza = document.createElement("option");
+    kwanza.value = "";
+    kwanza.textContent = "— Chagua tukio —";
+    orodha.appendChild(kwanza);
+
+    matukioYaKukagua.forEach(function (e) {
+      const op = document.createElement("option");
+      op.value = e.id;
+      op.textContent = e.name;
+      orodha.appendChild(op);
+    });
+
+    // Rudisha chaguo la awali kama bado lipo
+    const bado = matukioYaKukagua.some(function (e) { return e.id === tukioLililochaguliwa; });
+    if (!bado) tukioLililochaguliwa = "";
+    orodha.value = tukioLililochaguliwa;
+
+    orodha.style.display = "block";
+  } else {
+    orodha.style.display = "none";
+    tukioLililochaguliwa = "";
+  }
+}
+
 // Matukio ya leo; kama hakuna, tukio jipya zaidi
 async function tafutaMatukio() {
   const lebo = document.getElementById("lebo");
@@ -183,14 +218,28 @@ async function tafutaMatukio() {
     }
 
     matukioYaKukagua = waLeo;
-    if (lebo) {
-      lebo.textContent = waLeo.length
-        ? "Tukio: " + waLeo.map(function (e) { return e.name; }).join(" / ")
-        : "Hakuna tukio";
-    }
+    andaaOrodhaYaMatukio();
+    onyeshaLeboLaTukio();
   } catch (error) {
     console.error(error);
     if (lebo) lebo.textContent = "Imeshindikana kupakia tukio";
+  }
+}
+
+// Maandishi chini ya sehemu ya namba
+function onyeshaLeboLaTukio() {
+  const lebo = document.getElementById("lebo");
+  if (!lebo) return;
+
+  if (matukioYaKukagua.length === 0) {
+    lebo.textContent = "Hakuna tukio";
+  } else if (matukioYaKukagua.length === 1) {
+    lebo.textContent = "Tukio: " + matukioYaKukagua[0].name;
+  } else if (tukioLililochaguliwa) {
+    const t = matukioYaKukagua.find(function (e) { return e.id === tukioLililochaguliwa; });
+    lebo.textContent = "Tukio: " + (t ? t.name : "");
+  } else {
+    lebo.textContent = "Matukio ya leo: " + matukioYaKukagua.length + ". Chagua tukio.";
   }
 }
 
@@ -210,20 +259,33 @@ async function angaliaKwaNamba() {
     return;
   }
 
+  // Matukio yakiwa hayajapakia bado, yatafute kwanza
+  if (matukioYaKukagua.length === 0) {
+    await tafutaMatukio();
+  }
+  if (matukioYaKukagua.length === 0) {
+    onyeshaJibu("haijulikani", "", "HAKUNA TUKIO");
+    piga(false);
+    return;
+  }
+
+  // Matukio zaidi ya moja: lazima achague tukio kwanza (namba yake haifutwi)
+  if (matukioYaKukagua.length > 1 && !tukioLililochaguliwa) {
+    onyeshaJibu("haijulikani", "", "CHAGUA TUKIO KWANZA");
+    piga(false);
+    return;
+  }
+
+  // Tukio la kutafutia
+  const matukioYaKutafuta =
+    matukioYaKukagua.length > 1
+      ? matukioYaKukagua.filter(function (e) { return e.id === tukioLililochaguliwa; })
+      : matukioYaKukagua;
+
   anakaguaNamba = true;
   try {
-    if (matukioYaKukagua.length === 0) {
-      await tafutaMatukio();
-    }
-    if (matukioYaKukagua.length === 0) {
-      onyeshaJibu("haijulikani", "", "HAKUNA TUKIO");
-      piga(false);
-      return;
-    }
-
-    // Tafuta kwenye matukio yote yanayotumika kwa wakati mmoja
     const majibu = await Promise.all(
-      matukioYaKukagua.map(function (e) {
+      matukioYaKutafuta.map(function (e) {
         return db
           .collection("events").doc(e.id)
           .collection("guests")
@@ -243,9 +305,6 @@ async function angaliaKwaNamba() {
       kisanduku.style.display = "none";
       anaangalia = false;
       piga(false);
-    } else if (zilizopatikana.length > 1) {
-      onyeshaJibu("haijulikani", "", "NAMBA IPO KWENYE MATUKIO ZAIDI YA MOJA");
-      piga(false);
     } else {
       await kaguaMgeni(zilizopatikana[0]);
     }
@@ -263,11 +322,21 @@ async function angaliaKwaNamba() {
 function andaaNjiaYaNamba() {
   const kisandukuNamba = document.getElementById("nambaYaMgeni");
   const kitufeKagua = document.getElementById("kagua");
+  const orodha = document.getElementById("chaguaTukio");
   if (!kisandukuNamba || !kitufeKagua) return;
 
   kisandukuNamba.maxLength = UREFU_WA_NAMBA;
 
   kitufeKagua.addEventListener("click", angaliaKwaNamba);
+
+  // Mtu akichagua tukio, linakumbukwa hadi ukurasa ufunguliwe upya
+  if (orodha) {
+    orodha.addEventListener("change", function () {
+      tukioLililochaguliwa = orodha.value;
+      onyeshaLeboLaTukio();
+      kisandukuNamba.focus();
+    });
+  }
 
   kisandukuNamba.addEventListener("keydown", function (e) {
     if (e.key === "Enter") angaliaKwaNamba();
