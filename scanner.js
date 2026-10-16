@@ -22,9 +22,6 @@ function onyeshaJibu(darasa, jina, maneno) {
   kisanduku.style.display = "block";
   jinaMgeni.textContent = jina;
   hali.textContent = maneno;
-  try {
-    kisanduku.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  } catch (e) {}
 }
 
 window.onerror = function (ujumbe) {
@@ -351,12 +348,14 @@ function scanImefanikiwa(maandishi) {
   if (anaangalia) return;
   anaangalia = true;
   futaKidokezo();
+  piga(true);
+  onyeshaJibu("haijulikani", "Inakagua...", "Subiri kidogo");
   angaliaMgeni(maandishi);
 }
 
 // Mipangilio ya kamera inayofaa simu zote, hata za kawaida
 const mipangilioYaKamera = {
-  fps: 10, // simu dhaifu hazishindwi kuchakata fremu nyingi
+  fps: 15, // kasi zaidi ya kusoma fremu
   disableFlip: true,
   qrbox: function (upana, urefu) {
     // Soma karibu fremu nzima, QR hahitaji kuwa katikati kabisa
@@ -404,7 +403,7 @@ kitufeAnza.addEventListener("click", function () {
   if (kameraImewaka) return;
 
   if (!scanner) {
-    const mipangilio = { verbose: false };
+    const mipangilio = { verbose: false, useBarCodeDetectorIfSupported: true };
     if (typeof Html5QrcodeSupportedFormats !== "undefined") {
       mipangilio.formatsToSupport = [Html5QrcodeSupportedFormats.QR_CODE];
     }
