@@ -9,18 +9,6 @@
 </head>
 <body>
 
-  <!-- KIPANDE CHA MUDA: kinaonyesha kosa kwenye skrini (tutakiondoa baadaye) -->
-  <script>
-  window.addEventListener("error", function (e) {
-    var t = e.target || {};
-    if (t.src || t.href) {
-      alert("Faili halijapakia: " + (t.src || t.href));
-    } else {
-      alert("Kosa: " + e.message + " | mstari " + e.lineno);
-    }
-  }, true);
-  </script>
-
   <div class="container">
 
     <header class="kichwa">
@@ -31,22 +19,14 @@
       <h2>Scan Kadi ya Mgeni</h2>
     </header>
 
-    <button id="anza">Anza Kuscan</button>
-    <div id="reader"></div>
-
-    <!-- Tochi na zoom (zinajazwa na scanner.js kama simu inaruhusu) -->
-    <div id="vifaaVyaKamera"></div>
-
-    <!-- Kidokezo kama QR haisomeki -->
-    <div id="kidokezo"></div>
-
+    <!-- MATOKEO (juu kabisa) -->
     <div id="jibu">
       <p id="jinaMgeni"></p>
       <p id="hali"></p>
       <button id="mwingine">Scan Mwingine</button>
     </div>
 
-    <!-- Kagua kwa namba (kwa wageni wasio na QR) -->
+    <!-- Kagua kwa namba (chini ya matokeo) -->
     <section id="njiaNamba">
       <div class="njia-kichwa">Hana QR? Andika namba yake</div>
       <input
@@ -61,6 +41,15 @@
       <button id="kagua" type="button">Kagua Namba</button>
       <div id="lebo">Inatafuta tukio...</div>
     </section>
+
+    <button id="anza">Anza Kuscan</button>
+    <div id="reader"></div>
+
+    <!-- Tochi na zoom (zinajazwa na scanner.js kama simu inaruhusu) -->
+    <div id="vifaaVyaKamera"></div>
+
+    <!-- Kidokezo kama QR haisomeki -->
+    <div id="kidokezo"></div>
 
   </div>
 
