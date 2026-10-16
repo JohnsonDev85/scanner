@@ -45,6 +45,21 @@ try {
 
 // ============ MLIO NA MTETEMO ============
 let sautiCtx = null;
+
+// Gusa skrini mara ya kwanza: inaandaa sauti na mtetemo
+function andaaSautiNaMtetemo() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC && !sautiCtx) sautiCtx = new AC();
+    if (sautiCtx && sautiCtx.state === "suspended") sautiCtx.resume();
+  } catch (e) {}
+  try {
+    if (navigator.vibrate) navigator.vibrate(1);
+  } catch (e) {}
+}
+document.addEventListener("pointerdown", andaaSautiNaMtetemo, { once: true });
+document.addEventListener("touchstart", andaaSautiNaMtetemo, { once: true });
+
 function piga(vizuri) {
   try {
     if (!sautiCtx) {
@@ -64,7 +79,9 @@ function piga(vizuri) {
     }
   } catch (e) {}
   try {
-    if (navigator.vibrate) navigator.vibrate(vizuri ? 60 : [120, 60, 120]);
+    if (navigator.vibrate) {
+      navigator.vibrate(vizuri ? 150 : [250, 100, 250]);
+    }
   } catch (e) {}
 }
 
