@@ -409,3 +409,15 @@ h2 {
   position: static !important;
   margin: 10px 0;
 }
+#chaguaTukio {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  color: #f3e6d3;
+  background: #0d0a08;
+  border: 1px solid #6b4a1f;
+  border-radius: 12px;
+}
