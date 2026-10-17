@@ -2,8 +2,11 @@ const kitufeAnza = document.getElementById("anza");
 const kisanduku = document.getElementById("jibu");
 const jinaMgeni = document.getElementById("jinaMgeni");
 const hali = document.getElementById("hali");
+const kitufeMwingine = document.getElementById("mwingine");
 const eneoLaKamera = document.getElementById("reader");
 const eneoLaVifaa = document.getElementById("vifaaVyaKamera");
+const sehemuYaNamba = document.getElementById("njiaNamba");
+const kisandukuChaNamba = document.getElementById("nambaYaMgeni");
 
 // Urefu wa namba ya getini (herufi). Ukibadilisha kwenye Admin Panel, badilisha hapa pia.
 const UREFU_WA_NAMBA = 4;
@@ -21,17 +24,50 @@ let anakaguaNamba = false;
 // Tukio lililochaguliwa (linabaki hadi ukurasa ufunguliwe upya)
 let tukioLililochaguliwa = "";
 
+// Matokeo yanaonekana wapi: "juu" (QR, juu ya kamera) au "namba" (juu ya kisanduku cha namba)
+let njiaYaJibu = "juu";
+
+function wekaJibuJuu() {
+  if (kisanduku.nextElementSibling !== kitufeAnza) {
+    kitufeAnza.parentNode.insertBefore(kisanduku, kitufeAnza);
+  }
+  kitufeMwingine.style.display = "";
+}
+
+function wekaJibuKwenyeNamba() {
+  if (kisanduku.nextElementSibling !== kisandukuChaNamba) {
+    sehemuYaNamba.insertBefore(kisanduku, kisandukuChaNamba);
+  }
+  kitufeMwingine.style.display = "none";
+}
+
 // darasa: imelipwa | haijalipwa | ameshaingia | haijulikani
 function onyeshaJibu(darasa, jina, maneno) {
+  if (njiaYaJibu === "namba") {
+    wekaJibuKwenyeNamba();
+  } else {
+    wekaJibuJuu();
+  }
+
   kisanduku.className = darasa;
   kisanduku.style.display = "block";
   jinaMgeni.textContent = jina;
   hali.textContent = maneno;
-  // Matokeo yako juu: hakikisha yanaonekana mara moja
-  try {
-    window.scrollTo(0, 0);
-  } catch (e) {}
+
+  // Matokeo ya QR yako juu: hakikisha yanaonekana mara moja
+  if (njiaYaJibu === "juu") {
+    try {
+      window.scrollTo(0, 0);
+    } catch (e) {}
+  }
 }
+
+// Gusa matokeo ya namba ili uyafute
+kisanduku.addEventListener("click", function () {
+  if (njiaYaJibu === "namba") {
+    kisanduku.style.display = "none";
+  }
+});
 
 // ============ KUFICHA / KUONYESHA KAMERA ============
 function fichaKamera() {
@@ -277,8 +313,10 @@ function onyeshaLeboLaTukio() {
 async function angaliaKwaNamba() {
   if (anakaguaNamba) return;
 
-  const kisandukuNamba = document.getElementById("nambaYaMgeni");
-  const namba = kisandukuNamba.value.trim().toUpperCase().replace(/\s+/g, "");
+  // Matokeo ya namba yanaonekana juu ya kisanduku cha namba
+  njiaYaJibu = "namba";
+
+  const namba = kisandukuChaNamba.value.trim().toUpperCase().replace(/\s+/g, "");
 
   if (!db) {
     onyeshaJibu("haijulikani", "Kosa", "Firebase haijapakia");
@@ -332,7 +370,7 @@ async function angaliaKwaNamba() {
 
     if (zilizopatikana.length === 0) {
       // Namba si sahihi: mlio na mtetemo tu, bila kisanduku cha matokeo
-      endeleaKuscan();
+      kisanduku.style.display = "none";
       piga(false);
     } else {
       await kaguaMgeni(zilizopatikana[0]);
@@ -342,19 +380,18 @@ async function angaliaKwaNamba() {
     piga(false);
   } finally {
     anakaguaNamba = false;
-    kisandukuNamba.value = "";
-    kisandukuNamba.focus();
+    kisandukuChaNamba.value = "";
+    kisandukuChaNamba.focus();
   }
 }
 
 // Unganisha sehemu ya "kagua kwa namba" (HTML yake iko kwenye index.html)
 function andaaNjiaYaNamba() {
-  const kisandukuNamba = document.getElementById("nambaYaMgeni");
   const kitufeKagua = document.getElementById("kagua");
   const orodha = document.getElementById("chaguaTukio");
-  if (!kisandukuNamba || !kitufeKagua) return;
+  if (!kisandukuChaNamba || !kitufeKagua) return;
 
-  kisandukuNamba.maxLength = UREFU_WA_NAMBA;
+  kisandukuChaNamba.maxLength = UREFU_WA_NAMBA;
 
   kitufeKagua.addEventListener("click", angaliaKwaNamba);
 
@@ -363,18 +400,24 @@ function andaaNjiaYaNamba() {
     orodha.addEventListener("change", function () {
       tukioLililochaguliwa = orodha.value;
       onyeshaLeboLaTukio();
-      kisandukuNamba.focus();
+      kisandukuChaNamba.focus();
     });
   }
 
-  kisandukuNamba.addEventListener("keydown", function (e) {
+  kisandukuChaNamba.addEventListener("keydown", function (e) {
     if (e.key === "Enter") angaliaKwaNamba();
   });
 
-  // Ikifika herufi zote, kagua yenyewe (hakuna kubonyeza kitufe)
-  kisandukuNamba.addEventListener("input", function () {
-    kisandukuNamba.value = kisandukuNamba.value.toUpperCase().replace(/\s+/g, "");
-    if (kisandukuNamba.value.length >= UREFU_WA_NAMBA) {
+  // Ukianza kuandika namba mpya, matokeo ya awali yanafutika
+  kisandukuChaNamba.addEventListener("input", function () {
+    if (njiaYaJibu === "namba") {
+      kisanduku.style.display = "none";
+    }
+
+    kisandukuChaNamba.value = kisandukuChaNamba.value.toUpperCase().replace(/\s+/g, "");
+
+    // Ikifika herufi zote, kagua yenyewe (hakuna kubonyeza kitufe)
+    if (kisandukuChaNamba.value.length >= UREFU_WA_NAMBA) {
       angaliaKwaNamba();
     }
   });
@@ -464,6 +507,10 @@ function onyeshaVifaaVyaKamera() {
 function scanImefanikiwa(maandishi) {
   if (anaangalia) return;
   anaangalia = true;
+
+  // Matokeo ya QR yanaonekana juu ya kamera
+  njiaYaJibu = "juu";
+
   futaKidokezo();
   piga(true);
 
@@ -518,6 +565,9 @@ async function fungulaKamera() {
 }
 
 kitufeAnza.addEventListener("click", function () {
+  // Ujumbe wa kamera unaonekana juu
+  njiaYaJibu = "juu";
+
   if (typeof Html5Qrcode === "undefined") {
     onyeshaJibu("haijulikani", "Kosa", "Maktaba ya scanner haijapakia");
     return;
@@ -571,7 +621,7 @@ kitufeAnza.addEventListener("click", function () {
 });
 
 // "Scan Mwingine": matokeo yanaondoka na kamera inarudi
-document.getElementById("mwingine").addEventListener("click", endeleaKuscan);
+kitufeMwingine.addEventListener("click", endeleaKuscan);
 
 // ============ INIT ============
 andaaNjiaYaNamba();
