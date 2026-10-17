@@ -54,11 +54,18 @@ function onyeshaJibu(darasa, jina, maneno) {
   jinaMgeni.textContent = jina;
   hali.textContent = maneno;
 
-  // Matokeo ya QR yako juu: hakikisha yanaonekana mara moja
   if (njiaYaJibu === "juu") {
+    // Matokeo ya QR yako juu: hakikisha yanaonekana mara moja
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
+  } else {
+    // BADILIKO: matokeo ya namba yajisogeze hadi yaonekane (kibodi inapunguza eneo la skrini)
+    setTimeout(function () {
+      try {
+        kisanduku.scrollIntoView({ block: "center" });
+      } catch (e) {}
+    }, 60);
   }
 }
 
@@ -369,7 +376,7 @@ async function angaliaKwaNamba() {
     });
 
     if (zilizopatikana.length === 0) {
-      // BADILIKO: namba si sahihi, sasa inaonyesha ujumbe juu ya kisanduku cha namba
+      // Namba si sahihi: ujumbe juu ya kisanduku cha namba, pamoja na mlio
       onyeshaJibu("haijulikani", "", "NAMBA HAIJULIKANI");
       piga(false);
     } else {
@@ -381,7 +388,12 @@ async function angaliaKwaNamba() {
   } finally {
     anakaguaNamba = false;
     kisandukuChaNamba.value = "";
-    kisandukuChaNamba.focus();
+    // BADILIKO: focus bila kusukuma ukurasa (matokeo yasifichwe)
+    try {
+      kisandukuChaNamba.focus({ preventScroll: true });
+    } catch (e) {
+      kisandukuChaNamba.focus();
+    }
   }
 }
 
@@ -408,9 +420,9 @@ function andaaNjiaYaNamba() {
     if (e.key === "Enter") angaliaKwaNamba();
   });
 
-  // Ukianza kuandika namba mpya, matokeo ya awali yanafutika
   kisandukuChaNamba.addEventListener("input", function () {
-    if (njiaYaJibu === "namba") {
+    // BADILIKO: matokeo yanafutika tu ukianza kuandika herufi mpya (kisanduku si tupu)
+    if (njiaYaJibu === "namba" && kisandukuChaNamba.value.length > 0 && !anakaguaNamba) {
       kisanduku.style.display = "none";
     }
 
