@@ -369,8 +369,8 @@ async function angaliaKwaNamba() {
     });
 
     if (zilizopatikana.length === 0) {
-      // Namba si sahihi: mlio na mtetemo tu, bila kisanduku cha matokeo
-      kisanduku.style.display = "none";
+      // BADILIKO: namba si sahihi, sasa inaonyesha ujumbe juu ya kisanduku cha namba
+      onyeshaJibu("haijulikani", "", "NAMBA HAIJULIKANI");
       piga(false);
     } else {
       await kaguaMgeni(zilizopatikana[0]);
