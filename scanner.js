@@ -2,6 +2,8 @@ const kitufeAnza = document.getElementById("anza");
 const kisanduku = document.getElementById("jibu");
 const jinaMgeni = document.getElementById("jinaMgeni");
 const hali = document.getElementById("hali");
+const eneoLaKamera = document.getElementById("reader");
+const eneoLaVifaa = document.getElementById("vifaaVyaKamera");
 
 // Urefu wa namba ya getini (herufi). Ukibadilisha kwenye Admin Panel, badilisha hapa pia.
 const UREFU_WA_NAMBA = 4;
@@ -25,6 +27,34 @@ function onyeshaJibu(darasa, jina, maneno) {
   kisanduku.style.display = "block";
   jinaMgeni.textContent = jina;
   hali.textContent = maneno;
+  // Matokeo yako juu: hakikisha yanaonekana mara moja
+  try {
+    window.scrollTo(0, 0);
+  } catch (e) {}
+}
+
+// ============ KUFICHA / KUONYESHA KAMERA ============
+function fichaKamera() {
+  eneoLaKamera.style.display = "none";
+  eneoLaVifaa.style.display = "none";
+}
+
+function onyeshaKameraTena() {
+  eneoLaKamera.style.display = "";
+  eneoLaVifaa.style.display = "";
+}
+
+// Maliza matokeo na urudi kuscan (kamera inarudi)
+function endeleaKuscan() {
+  kisanduku.style.display = "none";
+  anaangalia = false;
+  if (kameraImewaka) {
+    onyeshaKameraTena();
+    try {
+      scanner.resume();
+    } catch (e) {}
+    anzaKidokezo();
+  }
 }
 
 window.onerror = function (ujumbe) {
@@ -302,8 +332,7 @@ async function angaliaKwaNamba() {
 
     if (zilizopatikana.length === 0) {
       // Namba si sahihi: mlio na mtetemo tu, bila kisanduku cha matokeo
-      kisanduku.style.display = "none";
-      anaangalia = false;
+      endeleaKuscan();
       piga(false);
     } else {
       await kaguaMgeni(zilizopatikana[0]);
@@ -437,6 +466,13 @@ function scanImefanikiwa(maandishi) {
   anaangalia = true;
   futaKidokezo();
   piga(true);
+
+  // Simamisha kamera na uifiche ili matokeo yaonekane juu bila kuscroll
+  try {
+    scanner.pause(true);
+  } catch (e) {}
+  fichaKamera();
+
   onyeshaJibu("haijulikani", "Inakagua...", "Subiri kidogo");
   angaliaMgeni(maandishi);
 }
@@ -534,11 +570,8 @@ kitufeAnza.addEventListener("click", function () {
     });
 });
 
-document.getElementById("mwingine").addEventListener("click", function () {
-  kisanduku.style.display = "none";
-  anaangalia = false;
-  if (kameraImewaka) anzaKidokezo();
-});
+// "Scan Mwingine": matokeo yanaondoka na kamera inarudi
+document.getElementById("mwingine").addEventListener("click", endeleaKuscan);
 
 // ============ INIT ============
 andaaNjiaYaNamba();
