@@ -41,8 +41,24 @@ function wekaJibuKwenyeNamba() {
   kitufeMwingine.style.display = "none";
 }
 
+// Mstari wa jina la tukio (unatengenezwa na JS, hauhitaji HTML)
+function mstariWaTukio() {
+  let el = document.getElementById("jinaTukio");
+  if (!el) {
+    el = document.createElement("p");
+    el.id = "jinaTukio";
+    el.style.margin = "6px 0 0";
+    el.style.fontSize = "0.9rem";
+    el.style.opacity = "0.85";
+    el.style.letterSpacing = "1px";
+    hali.insertAdjacentElement("afterend", el);
+  }
+  return el;
+}
+
 // darasa: imelipwa | haijalipwa | ameshaingia | haijulikani
-function onyeshaJibu(darasa, jina, maneno) {
+// tukio (hiari): jina la tukio la kuonyesha chini ya hali
+function onyeshaJibu(darasa, jina, maneno, tukio) {
   if (njiaYaJibu === "namba") {
     wekaJibuKwenyeNamba();
   } else {
@@ -54,18 +70,15 @@ function onyeshaJibu(darasa, jina, maneno) {
   jinaMgeni.textContent = jina;
   hali.textContent = maneno;
 
+  const mstari = mstariWaTukio();
+  mstari.textContent = tukio ? tukio : "";
+  mstari.style.display = tukio ? "block" : "none";
+
+  // Matokeo ya QR yako juu: hakikisha yanaonekana mara moja
   if (njiaYaJibu === "juu") {
-    // Matokeo ya QR yako juu: hakikisha yanaonekana mara moja
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
-  } else {
-    // BADILIKO: matokeo ya namba yajisogeze hadi yaonekane (kibodi inapunguza eneo la skrini)
-    setTimeout(function () {
-      try {
-        kisanduku.scrollIntoView({ block: "center" });
-      } catch (e) {}
-    }, 60);
   }
 }
 
@@ -179,34 +192,53 @@ async function kaguaMgeni(ref) {
 
       const mgeni = doc.data();
 
+      // Soma jina la tukio (ref.parent.parent ni tukio lenyewe)
+      // Kusoma lazima kufanyike kabla ya kuandika
+      let jinaLaTukio = "";
+      try {
+        const tukioDoc = await t.get(ref.parent.parent);
+        if (tukioDoc.exists) jinaLaTukio = tukioDoc.data().name || "";
+      } catch (e) {}
+      const tukio = jinaLaTukio ? "Tukio: " + jinaLaTukio : "";
+
       // Kwanza: ameshaingia? (hii inafanya kazi kwa QR na kwa namba)
       if (mgeni.attended === true) {
-        return { aina: "ameshaingia", jina: mgeni.name };
+        return { aina: "ameshaingia", jina: mgeni.name, tukio: tukio };
       }
 
       // Kisha: amelipa?
       if (mgeni.paid !== true) {
-        return { aina: "haijalipwa", jina: mgeni.name };
+        return { aina: "haijalipwa", jina: mgeni.name, tukio: tukio };
       }
 
       t.update(ref, {
         attended: true,
         attendedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      return { aina: "karibu", jina: mgeni.name, ainaKadi: maandishiYaAina(mgeni) };
+      return {
+        aina: "karibu",
+        jina: mgeni.name,
+        ainaKadi: maandishiYaAina(mgeni),
+        tukio: tukio
+      };
     });
 
     if (matokeo.aina === "haijulikani") {
       onyeshaJibu("haijulikani", "", "KADI HAIJULIKANI");
       piga(false);
     } else if (matokeo.aina === "haijalipwa") {
-      onyeshaJibu("haijalipwa", matokeo.jina, "HAJALIPA ✘");
+      onyeshaJibu("haijalipwa", matokeo.jina, "HAJALIPA ✘", matokeo.tukio);
       piga(false);
     } else if (matokeo.aina === "ameshaingia") {
-      onyeshaJibu("ameshaingia", matokeo.jina, "ALISHAINGIA TAYARI");
+      onyeshaJibu("ameshaingia", matokeo.jina, "ALISHAINGIA TAYARI", matokeo.tukio);
       piga(false);
     } else {
-      onyeshaJibu("imelipwa", matokeo.jina, "AMELIPA ✔ KARIBU · " + matokeo.ainaKadi);
+      onyeshaJibu(
+        "imelipwa",
+        matokeo.jina,
+        "AMELIPA ✔ KARIBU · " + matokeo.ainaKadi,
+        matokeo.tukio
+      );
       piga(true);
     }
   } catch (error) {
@@ -243,6 +275,7 @@ function tareheYaLeo() {
 }
 
 // Jaza orodha ya kuchagua tukio (inaonekana tu kama matukio ni zaidi ya moja)
+// Ni hiari: bila kuchagua, matukio yote ya leo yanakaguliwa
 function andaaOrodhaYaMatukio() {
   const orodha = document.getElementById("chaguaTukio");
   if (!orodha) return;
@@ -252,7 +285,7 @@ function andaaOrodhaYaMatukio() {
 
     const kwanza = document.createElement("option");
     kwanza.value = "";
-    kwanza.textContent = "— Chagua tukio —";
+    kwanza.textContent = "— Matukio yote ya leo —";
     orodha.appendChild(kwanza);
 
     matukioYaKukagua.forEach(function (e) {
@@ -312,7 +345,7 @@ function onyeshaLeboLaTukio() {
     const t = matukioYaKukagua.find(function (e) { return e.id === tukioLililochaguliwa; });
     lebo.textContent = "Tukio: " + (t ? t.name : "");
   } else {
-    lebo.textContent = "Matukio ya leo: " + matukioYaKukagua.length + ". Chagua tukio.";
+    lebo.textContent = "Matukio ya leo: " + matukioYaKukagua.length + " (yote yanakaguliwa)";
   }
 }
 
@@ -344,16 +377,9 @@ async function angaliaKwaNamba() {
     return;
   }
 
-  // Matukio zaidi ya moja: lazima achague tukio kwanza (namba yake haifutwi)
-  if (matukioYaKukagua.length > 1 && !tukioLililochaguliwa) {
-    onyeshaJibu("haijulikani", "", "CHAGUA TUKIO KWANZA");
-    piga(false);
-    return;
-  }
-
-  // Tukio la kutafutia
+  // Kama ameshachagua tukio, tafuta humo tu; vinginevyo tafuta kwenye matukio yote ya leo
   const matukioYaKutafuta =
-    matukioYaKukagua.length > 1
+    tukioLililochaguliwa
       ? matukioYaKukagua.filter(function (e) { return e.id === tukioLililochaguliwa; })
       : matukioYaKukagua;
 
@@ -376,8 +402,12 @@ async function angaliaKwaNamba() {
     });
 
     if (zilizopatikana.length === 0) {
-      // Namba si sahihi: ujumbe juu ya kisanduku cha namba, pamoja na mlio
-      onyeshaJibu("haijulikani", "", "NAMBA HAIJULIKANI");
+      // Namba si sahihi: mlio na mtetemo tu, bila kisanduku cha matokeo
+      kisanduku.style.display = "none";
+      piga(false);
+    } else if (zilizopatikana.length > 1) {
+      // Kodi ileile ipo kwenye matukio zaidi ya moja (wageni wa zamani): usikisie
+      onyeshaJibu("haijulikani", "", "NAMBA IMEJIRUDIA - CHAGUA TUKIO");
       piga(false);
     } else {
       await kaguaMgeni(zilizopatikana[0]);
@@ -388,12 +418,7 @@ async function angaliaKwaNamba() {
   } finally {
     anakaguaNamba = false;
     kisandukuChaNamba.value = "";
-    // BADILIKO: focus bila kusukuma ukurasa (matokeo yasifichwe)
-    try {
-      kisandukuChaNamba.focus({ preventScroll: true });
-    } catch (e) {
-      kisandukuChaNamba.focus();
-    }
+    kisandukuChaNamba.focus();
   }
 }
 
@@ -420,9 +445,9 @@ function andaaNjiaYaNamba() {
     if (e.key === "Enter") angaliaKwaNamba();
   });
 
+  // Ukianza kuandika namba mpya, matokeo ya awali yanafutika
   kisandukuChaNamba.addEventListener("input", function () {
-    // BADILIKO: matokeo yanafutika tu ukianza kuandika herufi mpya (kisanduku si tupu)
-    if (njiaYaJibu === "namba" && kisandukuChaNamba.value.length > 0 && !anakaguaNamba) {
+    if (njiaYaJibu === "namba") {
       kisanduku.style.display = "none";
     }
 
