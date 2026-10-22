@@ -224,7 +224,7 @@ async function kaguaMgeni(ref, mgeniAwali) {
 
         // Kisha: amelipa?
         if (mgeni.paid !== true) {
-          return { aina: "haijalipwa", jina: mgeni.name };
+          return { aina: "haijalipiwa", jina: mgeni.name };
         }
 
         t.update(ref, {
@@ -396,7 +396,7 @@ async function angaliaKwaNamba() {
 
   // Funga kibodi ili jibu lionekane vizuri, na onyesha kuwa inakagua mara moja
   try { kisandukuChaNamba.blur(); } catch (e) {}
-  onyeshaJibu("haijulikani", namba, "Inakagua...");
+  onyeshaJibu("haijulikani", namba, "Checking...");
   kitufeMwingine.style.display = "none";
 
   try {
@@ -435,7 +435,7 @@ async function angaliaKwaNamba() {
     });
 
     if (zilizopatikana.length === 0) {
-      onyeshaJibu("haijulikani", namba, "NAMBA HAIJAPATIKANA");
+      onyeshaJibu("haijulikani", namba, "NAMBA HII HAIPO");
       piga(false);
     } else if (zilizopatikana.length > 1) {
       // Kodi ileile ipo kwenye matukio zaidi ya moja (wageni wa zamani): usikisie
