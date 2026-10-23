@@ -435,7 +435,7 @@ async function angaliaKwaNamba() {
     });
 
     if (zilizopatikana.length === 0) {
-      onyeshaJibu("haijulikani", namba, "NAMBA HAIJAPATIKANA");
+      onyeshaJibu("haijulikani", namba, "NAMBA HII HAIPO");
       piga(false);
     } else if (zilizopatikana.length > 1) {
       // Kodi ileile ipo kwenye matukio zaidi ya moja (wageni wa zamani): usikisie
