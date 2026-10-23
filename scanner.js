@@ -17,8 +17,10 @@ let scanner = null;
 let db = null;
 let kidokezoTimer = null;
 
-// Matukio yanayotumika kukagua kwa namba (yanatafutwa yenyewe)
+// Matukio yanayotumika kukagua kwa namba kwanza (ya leo, au jipya zaidi)
 let matukioYaKukagua = [];
+// Matukio YOTE (yanatumika kama namba haijapatikana kwenye ya leo)
+let matukioYote = [];
 let anakaguaNamba = false;
 
 // Majina ya matukio yote (id -> jina), ili tusisome tukio tena wakati wa ukaguzi
@@ -243,7 +245,7 @@ async function kaguaMgeni(ref, mgeniAwali) {
     const tukio = jinaLaTukio ? "Tukio: " + jinaLaTukio : "";
 
     if (matokeo.aina === "haijulikani") {
-      onyeshaJibu("haijulikani", "", "KADI HAIJULIKANI");
+      onyeshaJibu("haijulikani", "", "KADI HII HAIPO");
       piga(false);
     } else if (matokeo.aina === "haijalipwa") {
       onyeshaJibu("haijalipwa", matokeo.jina, "HAJALIPA ✘", tukio);
@@ -271,7 +273,7 @@ async function angaliaMgeni(maandishi) {
   const sehemu = maandishi.split("::");
 
   if (sehemu.length !== 2) {
-    onyeshaJibu("haijulikani", "", "KADI HAIJULIKANI");
+    onyeshaJibu("haijulikani", "", "KADI HII HAIPO");
     piga(false);
     return;
   }
@@ -336,6 +338,9 @@ async function tafutaMatukio() {
       wote.push({ id: doc.id, ...doc.data() });
     });
 
+    // Matukio yote yanakumbukwa kwa utafutaji wa ziada
+    matukioYote = wote;
+
     // Kumbuka majina ya matukio yote (kwa ukaguzi wa haraka)
     majinaYaMatukio = {};
     wote.forEach(function (e) {
@@ -357,7 +362,7 @@ async function tafutaMatukio() {
   }
 }
 
-// Maandishi chini ya sehemu ya namba
+// Maandishi chini ya sehemu ya namba (kama kipengele cha #lebo kipo kwenye HTML)
 function onyeshaLeboLaTukio() {
   const lebo = document.getElementById("lebo");
   if (!lebo) return;
@@ -375,6 +380,29 @@ function onyeshaLeboLaTukio() {
 }
 
 // ============ UKAGUZI KWA NAMBA ============
+
+// Tafuta namba kwenye orodha ya matukio (kwa wakati mmoja)
+async function tafutaNambaKwenyeMatukio(orodha, namba) {
+  const majibu = await Promise.all(
+    orodha.map(function (e) {
+      return db
+        .collection("events").doc(e.id)
+        .collection("guests")
+        .where("namba", "==", namba)
+        .limit(1)
+        .get();
+    })
+  );
+
+  const zilizopatikana = [];
+  majibu.forEach(function (snap) {
+    if (!snap.empty) {
+      zilizopatikana.push({ ref: snap.docs[0].ref, data: snap.docs[0].data() });
+    }
+  });
+  return zilizopatikana;
+}
+
 async function angaliaKwaNamba() {
   if (anakaguaNamba) return;
 
@@ -410,29 +438,24 @@ async function angaliaKwaNamba() {
       return;
     }
 
-    // Kama ameshachagua tukio, tafuta humo tu; vinginevyo tafuta kwenye matukio yote ya leo
+    // Kama ameshachagua tukio, tafuta humo tu; vinginevyo tafuta kwenye matukio ya leo kwanza
     const matukioYaKutafuta =
       tukioLililochaguliwa
         ? matukioYaKukagua.filter(function (e) { return e.id === tukioLililochaguliwa; })
         : matukioYaKukagua;
 
-    const majibu = await Promise.all(
-      matukioYaKutafuta.map(function (e) {
-        return db
-          .collection("events").doc(e.id)
-          .collection("guests")
-          .where("namba", "==", namba)
-          .limit(1)
-          .get();
-      })
-    );
+    let zilizopatikana = await tafutaNambaKwenyeMatukio(matukioYaKutafuta, namba);
 
-    const zilizopatikana = [];
-    majibu.forEach(function (snap) {
-      if (!snap.empty) {
-        zilizopatikana.push({ ref: snap.docs[0].ref, data: snap.docs[0].data() });
+    // Haikupatikana kwenye ya leo: tafuta kwenye matukio MENGINE YOTE
+    // (si pale mlinzi alipochagua tukio mwenyewe)
+    if (zilizopatikana.length === 0 && !tukioLililochaguliwa) {
+      const wengine = matukioYote.filter(function (e) {
+        return !matukioYaKutafuta.some(function (x) { return x.id === e.id; });
+      });
+      if (wengine.length > 0) {
+        zilizopatikana = await tafutaNambaKwenyeMatukio(wengine, namba);
       }
-    });
+    }
 
     if (zilizopatikana.length === 0) {
       onyeshaJibu("haijulikani", namba, "NAMBA HII HAIPO");
