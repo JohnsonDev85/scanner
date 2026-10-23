@@ -581,7 +581,11 @@ function scanImefanikiwa(maandishi) {
   njiaYaJibu = "juu";
 
   futaKidokezo();
-  piga(true);
+
+  // Mtetemo mfupi tu kuonyesha QR imesomwa (mlio unatoka baada ya jibu)
+  try {
+    if (navigator.vibrate) navigator.vibrate(30);
+  } catch (e) {}
 
   // Simamisha kamera na uifiche ili matokeo yaonekane juu bila kuscroll
   try {
@@ -590,6 +594,9 @@ function scanImefanikiwa(maandishi) {
   fichaKamera();
 
   onyeshaJibu("haijulikani", "Inakagua...", "Subiri kidogo");
+  // Kitufe cha kuendelea kinafichwa hadi jibu litoke
+  kitufeMwingine.style.display = "none";
+
   angaliaMgeni(maandishi);
 }
 
