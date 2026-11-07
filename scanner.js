@@ -7,12 +7,14 @@ const eneoLaKamera = document.getElementById("reader");
 const eneoLaVifaa = document.getElementById("vifaaVyaKamera");
 const sehemuYaNamba = document.getElementById("njiaNamba");
 const kisandukuChaNamba = document.getElementById("nambaYaMgeni");
+const kitufeFunga = document.getElementById("funga");
 
 // Urefu wa namba ya getini (herufi). Ukibadilisha kwenye Admin Panel, badilisha hapa pia.
 const UREFU_WA_NAMBA = 4;
 
 let anaangalia = false;
 let kameraImewaka = false;
+let kameraInafunguka = false;
 let scanner = null;
 let db = null;
 let kidokezoTimer = null;
@@ -180,6 +182,49 @@ function onyeshaKameraTena() {
   eneoLaKamera.style.display = "";
   eneoLaVifaa.style.display = "";
 }
+
+// ============ CHAGUO: KAMERA AU NAMBA (kimoja tu kwa wakati) ============
+// Onyesha au ficha sehemu ya kuandika namba
+function onyeshaNjiaNamba(onyesha) {
+  sehemuYaNamba.style.display = onyesha ? "" : "none";
+}
+
+// Hali ya "kamera": namba inajificha, kitufe cha Anza kinajificha, kitufe cha Funga kinaonekana
+function haliYaKamera() {
+  onyeshaNjiaNamba(false);
+  kitufeAnza.style.display = "none";
+  kitufeFunga.style.display = "block";
+}
+
+// Hali ya "namba": kamera imezimwa, namba inaonekana, kitufe cha Anza kinarudi
+function haliYaNamba() {
+  onyeshaNjiaNamba(true);
+  kitufeAnza.style.display = "";
+  kitufeFunga.style.display = "none";
+}
+
+// Zima kamera kabisa na urudishe chaguo la namba
+async function zimaKamera() {
+  idYaUkaguzi++; // zuia majibu ya zamani yasivuruge skrini
+
+  futaKidokezo();
+
+  if (scanner && kameraImewaka) {
+    try { await scanner.stop(); } catch (e) {}
+    try { scanner.clear(); } catch (e) {}
+  }
+
+  kameraImewaka = false;
+  kameraInafunguka = false;
+  anaangalia = false;
+
+  fichaKamera();
+  eneoLaVifaa.innerHTML = "";
+  kisanduku.style.display = "none";
+  haliYaNamba();
+}
+
+kitufeFunga.addEventListener("click", zimaKamera);
 
 // Maliza matokeo na urudi kuscan (kamera inarudi)
 function endeleaKuscan() {
@@ -899,8 +944,9 @@ kitufeAnza.addEventListener("click", function () {
     return;
   }
 
-  // Kamera tayari imewaka: usifungue mara mbili
-  if (kameraImewaka) return;
+  // Kamera tayari imewaka au inafunguka: usifungue mara mbili
+  if (kameraImewaka || kameraInafunguka) return;
+  kameraInafunguka = true;
 
   if (!scanner) {
     const mipangilio = { verbose: false, useBarCodeDetectorIfSupported: true };
@@ -915,9 +961,14 @@ kitufeAnza.addEventListener("click", function () {
 
   onyeshaJibu("haijulikani", "Subiri...", "Inafungua kamera");
 
+  // Chaguo la kamera: ficha namba na kitufe cha Anza, onyesha kitufe cha Funga
+  onyeshaKameraTena();
+  haliYaKamera();
+
   fungulaKamera()
     .then(function () {
       kameraImewaka = true;
+      kameraInafunguka = false;
       kisanduku.style.display = "none";
 
       // Omba focus ya kuendelea (kamera zisizo na focus nzuri)
@@ -933,6 +984,11 @@ kitufeAnza.addEventListener("click", function () {
       anzaKidokezo();
     })
     .catch(function (error) {
+      kameraInafunguka = false;
+
+      // Kamera imeshindikana: rudisha namba na kitufe cha Anza
+      haliYaNamba();
+
       const maelezo = String(error);
       if (/NotAllowed|Permission|denied/i.test(maelezo)) {
         onyeshaJibu(
@@ -964,3 +1020,4 @@ kitufeMwingine.addEventListener("click", function () {
 
 // ============ INIT ============
 andaaNjiaYaNamba();
+haliYaNamba();
